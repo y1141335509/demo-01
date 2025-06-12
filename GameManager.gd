@@ -1,18 +1,19 @@
 extends Node
 
-var hunger := 50
-var sugar := 50
+# 游戏状态变量
+var satiety := 50.0      
+var blood_sugar := 50.0  
 var time_left := 30.0
+var is_paused := false   
 
 # UI节点引用
-var hunger_bar: ProgressBar
-var glucose_bar: ProgressBar  
+var hunger_bar: ProgressBar      
+var glucose_bar: ProgressBar     
 var timer_label: Label
+var pause_label: Label
 var watermelon_spawner: Node2D
 
 func _ready():
-	print("GameManager starting...")
-	
 	# 等一帧确保所有节点都已就绪
 	await get_tree().process_frame
 	
@@ -27,165 +28,222 @@ func _ready():
 	
 	# 启动游戏
 	start_game()
-	
-	# 测试进度条更新（5秒后测试）
-	await get_tree().create_timer(5.0).timeout
-	test_progress_bars()
 
-func test_progress_bars():
-	print("=== 测试进度条更新 ===")
-	hunger = 75
-	sugar = 25
-	update_ui()
-	print("测试完成：设置 hunger=75, sugar=25")
+func _input(event):
+	# 处理暂停输入
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_SPACE or event.keycode == KEY_ESCAPE:
+			toggle_pause()
+
+func toggle_pause():
+	is_paused = !is_paused
+	get_tree().paused = is_paused
+	
+	if pause_label:
+		pause_label.visible = is_paused
+	
+	if is_paused:
+		if watermelon_spawner and watermelon_spawner.has_method("stop_spawning"):
+			watermelon_spawner.stop_spawning()
+	else:
+		if watermelon_spawner and watermelon_spawner.has_method("start_spawning"):
+			watermelon_spawner.start_spawning()
 
 func setup_progress_bars():
-	if hunger_bar and hunger_bar is ProgressBar:
+	if hunger_bar:
 		hunger_bar.min_value = 0
 		hunger_bar.max_value = 100
-		hunger_bar.value = hunger
-		print("HungerBar setup: min=", hunger_bar.min_value, " max=", hunger_bar.max_value, " value=", hunger_bar.value)
+		hunger_bar.value = satiety
+		print("HungerBar 就绪")
+	else:
+		print("❌ 找不到 HungerBar")
 	
-	if glucose_bar and glucose_bar is ProgressBar:
+	if glucose_bar:
 		glucose_bar.min_value = 0
 		glucose_bar.max_value = 100
-		glucose_bar.value = sugar
-		print("GlucoseBar setup: min=", glucose_bar.min_value, " max=", glucose_bar.max_value, " value=", glucose_bar.value)
+		glucose_bar.value = blood_sugar
+		print("GlucoseBar 就绪")
+	else:
+		print("❌ 找不到 GlucoseBar")
 
 func setup_nodes():
-	print("=== 开始查找节点 ===")
-	print("GameManager path: ", get_path())
-	print("所有根节点:")
-	var root = get_tree().root
-	for child in root.get_children():
-		print("  根节点: ", child.name, " (", child.get_class(), ")")
-		if child.name.to_lower().contains("main"):
-			print("    Main节点的子节点:")
-			for grandchild in child.get_children():
-				print("      - ", grandchild.name, " (", grandchild.get_class(), ")")
-				if grandchild.name.to_lower().contains("ui"):
-					print("        UI节点的子节点:")
-					for ui_child in grandchild.get_children():
-						print("          - ", ui_child.name, " (", ui_child.get_class(), ")")
+	# 使用更广泛的搜索来找到进度条
+	var root_node = get_tree().current_scene
+	hunger_bar = find_progress_bar_by_name(root_node, "HungerBar")
+	glucose_bar = find_progress_bar_by_name(root_node, "GlucoseBar")
+	timer_label = find_label_by_name(root_node, "TimerLabel")
 	
-	# 尝试暴力搜索所有ProgressBar和Label
-	print("=== 暴力搜索UI节点 ===")
-	var all_progress_bars = []
-	var all_labels = []
-	
-	find_nodes_recursive(get_tree().root, all_progress_bars, all_labels)
-	
-	print("找到的ProgressBar数量: ", all_progress_bars.size())
-	for i in range(all_progress_bars.size()):
-		var bar = all_progress_bars[i]
-		print("  ProgressBar ", i, ": ", bar.get_path(), " value=", bar.value)
-		if i == 0:
-			hunger_bar = bar
-			print("    -> 分配为 HungerBar")
-		elif i == 1:
-			glucose_bar = bar
-			print("    -> 分配为 GlucoseBar")
-	
-	print("找到的Label数量: ", all_labels.size())
-	for i in range(all_labels.size()):
-		var label = all_labels[i]
-		print("  Label ", i, ": ", label.get_path(), " text='", label.text, "'")
-		if i == 0:
-			timer_label = label
-			print("    -> 分配为 TimerLabel")
+	# 创建暂停标签
+	create_pause_label()
 	
 	# 获取西瓜生成器
 	watermelon_spawner = get_node_or_null("../WatermelonSpawner")
-	if watermelon_spawner:
-		print("WatermelonSpawner found")
-	else:
-		print("Warning: WatermelonSpawner not found")
 
-func find_nodes_recursive(node: Node, progress_bars: Array, labels: Array):
-	if node is ProgressBar:
-		progress_bars.append(node)
-	elif node is Label:
-		labels.append(node)
-	
+func find_progress_bar_by_name(node: Node, target_name: String):
+	if node.name == target_name and node is ProgressBar:
+		return node
 	for child in node.get_children():
-		find_nodes_recursive(child, progress_bars, labels)
+		var result = find_progress_bar_by_name(child, target_name)
+		if result:
+			return result
+	return null
+
+func find_label_by_name(node: Node, target_name: String):
+	if node.name == target_name and node is Label:
+		return node
+	for child in node.get_children():
+		var result = find_label_by_name(child, target_name)
+		if result:
+			return result
+	return null
+
+func create_pause_label():
+	var ui_node = get_node_or_null("../UI")
+	if ui_node:
+		pause_label = Label.new()
+		pause_label.name = "PauseLabel"
+		pause_label.text = "游戏暂停\\n按空格键继续"
+		pause_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		pause_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		
+		# 设置位置（屏幕中央）
+		pause_label.anchors_preset = Control.PRESET_CENTER
+		pause_label.anchor_left = 0.5
+		pause_label.anchor_right = 0.5
+		pause_label.anchor_top = 0.5
+		pause_label.anchor_bottom = 0.5
+		pause_label.offset_left = -200
+		pause_label.offset_right = 200
+		pause_label.offset_top = -50
+		pause_label.offset_bottom = 50
+		
+		pause_label.visible = false
+		ui_node.add_child(pause_label)
 
 func start_game():
-	print("Starting game...")
+	print("游戏开始")
+	
+	# 连接预制西瓜的信号
+	var prebuilt_watermelon = get_node_or_null("../Watermelon")
+	if prebuilt_watermelon:
+		if prebuilt_watermelon.has_signal("sliced"):
+			var connection_result = prebuilt_watermelon.connect("sliced", Callable(self, "on_watermelon_sliced"))
+			if connection_result == OK:
+				print("预制西瓜信号已连接")
+			else:
+				print("❌ 预制西瓜信号连接失败")
 	
 	# 启动西瓜生成器
 	if watermelon_spawner and watermelon_spawner.has_method("start_spawning"):
 		watermelon_spawner.start_spawning()
-		print("Watermelon spawner started")
 
 func _process(delta):
+	# 暂停时不处理游戏逻辑
+	if is_paused:
+		return
+	
+	# 饥饿度下降
+	satiety -= delta * 0.1
+	satiety = clamp(satiety, 0.0, 100.0)
+	
 	# 更新时间
 	time_left -= delta
 	
-	# 更新UI
-	if timer_label:
-		timer_label.text = "Time: %.1f" % time_left
+	# 更新UI（每30帧更新一次以优化性能）
+	if Engine.get_process_frames() % 30 == 0:
+		if timer_label:
+			timer_label.text = "Time: %.1f" % time_left
+		update_ui()
 	
 	# 检查游戏结束条件
 	if time_left <= 0:
-		game_over(true)
-	elif hunger <= 0 or sugar >= 100:
-		game_over(false)
+		game_over(true, "时间到")
+	elif satiety <= 0:
+		game_over(false, "饿死了")
+	elif blood_sugar >= 100:
+		game_over(false, "糖尿病了")
 
-func update_stats(h: int, s: int):
-	var old_hunger = hunger
-	var old_sugar = sugar
+func on_watermelon_sliced(hunger_restore: int, sugar_increase: int):
+	print("🍉 西瓜被切! 饥饿+", hunger_restore, " 血糖+", sugar_increase)
 	
-	hunger += h
-	sugar += s
-	hunger = clamp(hunger, 0, 100)
-	sugar = clamp(sugar, 0, 100)
+	var old_satiety = satiety
+	var old_blood_sugar = blood_sugar
 	
-	print("=== 数值更新 ===")
-	print("Hunger: ", old_hunger, " -> ", hunger, " (change: +", h, ")")
-	print("Sugar: ", old_sugar, " -> ", sugar, " (change: +", s, ")")
-	update_ui()
+	# 切西瓜的效果
+	satiety += float(hunger_restore)
+	blood_sugar += float(sugar_increase)
+	
+	# 限制范围
+	satiety = clamp(satiety, 0.0, 100.0)
+	blood_sugar = clamp(blood_sugar, 0.0, 100.0)
+	
+	print("饥饿: %.0f->%.0f, 血糖: %.0f->%.0f" % [old_satiety, satiety, old_blood_sugar, blood_sugar])
+	
+	# 立即更新UI
+	force_update_ui()
 
-func update_ui():
-	print("=== 更新UI ===")
-	print("Current values: Hunger=", hunger, " Sugar=", sugar)
-	
+func force_update_ui():
+	# 强制更新进度条
 	if hunger_bar and is_instance_valid(hunger_bar):
-		var old_value = hunger_bar.value
-		hunger_bar.value = hunger
-		print("HungerBar: ", old_value, " -> ", hunger_bar.value, " (expected: ", hunger, ")")
+		hunger_bar.value = satiety
+		print("HungerBar -> %.0f" % satiety)
 		
-		# 强制刷新
-		hunger_bar.queue_redraw()
+		# 颜色变化
+		if satiety < 20:
+			hunger_bar.modulate = Color.RED
+		elif satiety < 50:
+			hunger_bar.modulate = Color.YELLOW
+		else:
+			hunger_bar.modulate = Color.GREEN
 	else:
-		print("HungerBar not available or invalid")
+		print("❌ HungerBar 无效")
 	
 	if glucose_bar and is_instance_valid(glucose_bar):
-		var old_value = glucose_bar.value
-		glucose_bar.value = sugar
-		print("GlucoseBar: ", old_value, " -> ", glucose_bar.value, " (expected: ", sugar, ")")
+		glucose_bar.value = blood_sugar
+		print("GlucoseBar -> %.0f" % blood_sugar)
 		
-		# 强制刷新
-		glucose_bar.queue_redraw()
+		# 颜色变化
+		if blood_sugar > 80:
+			glucose_bar.modulate = Color.RED
+		elif blood_sugar > 60:
+			glucose_bar.modulate = Color.YELLOW
+		else:
+			glucose_bar.modulate = Color.GREEN
 	else:
-		print("GlucoseBar not available or invalid")
+		print("❌ GlucoseBar 无效")
 
-func game_over(success: bool):
-	print("Game Over!")
+func update_ui():
+	if hunger_bar and is_instance_valid(hunger_bar):
+		hunger_bar.value = satiety
+		if satiety < 20:
+			hunger_bar.modulate = Color.RED
+		elif satiety < 50:
+			hunger_bar.modulate = Color.YELLOW
+		else:
+			hunger_bar.modulate = Color.GREEN
+	
+	if glucose_bar and is_instance_valid(glucose_bar):
+		glucose_bar.value = blood_sugar
+		if blood_sugar > 80:
+			glucose_bar.modulate = Color.RED
+		elif blood_sugar > 60:
+			glucose_bar.modulate = Color.YELLOW
+		else:
+			glucose_bar.modulate = Color.GREEN
+
+func game_over(success: bool, reason: String = ""):
+	print("游戏结束: ", reason)
 	
 	# 停止生成西瓜
 	if watermelon_spawner and watermelon_spawner.has_method("stop_spawning"):
 		watermelon_spawner.stop_spawning()
 	
 	# 暂停游戏
+	is_paused = true
 	get_tree().paused = true
 	
+	# 根据成功/失败显示不同消息
 	if success:
-		print("恭喜通关！")
+		print("🎉 恭喜通关!")
 	else:
-		if hunger <= 0:
-			print("游戏结束：饿死了")
-		elif sugar >= 100:
-			print("游戏结束：糖尿病了")
-		else:
-			print("游戏结束：时间到了")
+		print("💀 游戏失败")

@@ -10,7 +10,7 @@ var trail_points = []
 var trail_lifetime := 0.3
 
 func _ready():
-	print("PlayerSwipe ready")
+	pass # 移除打印
 
 func _unhandled_input(event):
 	if event is InputEventMouseButton:
@@ -19,16 +19,14 @@ func _unhandled_input(event):
 				is_swiping = true
 				swipe_path.clear()
 				trail_points.clear()
-				print("Started swiping")
 			else:
 				is_swiping = false
-				print("Stopped swiping")
 	
 	elif event is InputEventMouseMotion and is_swiping:
 		swipe_timer = 0.0
 		swipe_path.append(event.position)
 		
-		# 添加拖痕点 - 使用更简单的时间获取方式
+		# 添加拖痕点
 		var current_time = Time.get_time_dict_from_system()
 		var time_value = current_time.get("second", 0) + current_time.get("msec", 0) / 1000.0
 		
@@ -86,19 +84,39 @@ func check_hit(pos):
 	# 执行查询
 	var results = space_state.intersect_point(query)
 	
-	for result in results:
-		var body = result["collider"]
-		if body and body.is_in_group("cuttable"):
-			print("Hit cuttable object: ", body.name)
-			if body.has_method("slice"):
-				body.slice()
-				# 创建切割特效
-				create_slice_effect(pos)
-			break
+	# 详细调试切到西瓜的情况
+	if results.size() > 0:
+		print("检测到碰撞，物体数量: ", results.size())
+		
+		for result in results:
+			var body = result["collider"]
+			print("- 物体名称: ", body.name, " 类型: ", body.get_class())
+			
+			# 检查是否在 cuttable 组中
+			if body.is_in_group("cuttable"):
+				print("  ✅ 这是可切割物体!")
+				
+				# 检查是否有slice方法
+				if body.has_method("slice"):
+					print("  ✅ 调用 slice() 方法")
+					body.slice()
+					create_slice_effect(pos)
+					return  # 切到一个就够了
+				else:
+					# 检查是否有meta中的slice方法（动态西瓜）
+					var slice_method = body.get_meta("slice_method", null)
+					if slice_method:
+						print("  ✅ 调用动态西瓜 slice 方法")
+						slice_method.call()
+						create_slice_effect(pos)
+						return
+					else:
+						print("  ❌ 没有 slice() 方法")
+			else:
+				print("  ❌ 不在 cuttable 组中")
+				var groups = body.get_groups()
+				print("  当前组: ", groups)
 
 func create_slice_effect(pos):
-	# 创建切割特效粒子
-	print("Slice effect at: ", pos)
-	
-	# 可以在这里添加粒子效果或者简单的视觉反馈
-	# 暂时用console输出作为反馈
+	# 创建切割特效
+	print("切割特效位置: ", pos)
