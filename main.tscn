@@ -1,0 +1,70 @@
+[gd_scene load_steps=8 format=3 uid="uid://bja3k5auq7iyd"]
+
+[ext_resource type="Script" path="res://GameManager.gd" id="1_sxskj"]
+[ext_resource type="Script" path="res://PlayerSwipe.gd" id="2_fqaf4"]
+[ext_resource type="Script" path="res://WatermelonSpawner.gd" id="3_v5ovr"]
+[ext_resource type="PackedScene" uid="uid://d3wb82kpgacr1" path="res://Watermelon.tscn" id="4_2vdqe"]
+[ext_resource type="Script" path="res://Watermelon.gd" id="5_kc52n"]
+[ext_resource type="Texture2D" uid="uid://dlrw2yjddsrmr" path="res://icon.svg" id="6_liait"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_lt8re"]
+radius = 15.7
+
+[node name="Main" type="Node2D"]
+
+[node name="GameManager" type="Node" parent="."]
+script = ExtResource("1_sxskj")
+
+[node name="Timer" type="Timer" parent="GameManager"]
+wait_time = 1.5
+
+[node name="PlayerSwipe" type="Node2D" parent="."]
+script = ExtResource("2_fqaf4")
+
+[node name="WatermelonSpawner" type="Node2D" parent="."]
+script = ExtResource("3_v5ovr")
+watermelon_scene = ExtResource("4_2vdqe")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="GlucoseBar" type="ProgressBar" parent="UI"]
+custom_minimum_size = Vector2(500, 4)
+offset_left = 620.0
+offset_top = 40.0
+offset_right = 1120.0
+offset_bottom = 67.0
+metadata/_edit_use_anchors_ = true
+
+[node name="HungerBar" type="ProgressBar" parent="UI"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -556.0
+offset_top = 40.0
+offset_right = -56.0
+offset_bottom = 67.0
+grow_horizontal = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="TimerLabel" type="Label" parent="UI"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -50.0
+offset_right = 50.0
+offset_bottom = 27.0
+grow_horizontal = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Background" type="Sprite2D" parent="."]
+
+[node name="Watermelon" type="RigidBody2D" parent="."]
+position = Vector2(160, 88)
+script = ExtResource("5_kc52n")
+
+[node name="Sprite2D" type="Sprite2D" parent="Watermelon"]
+texture = ExtResource("6_liait")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Watermelon"]
+shape = SubResource("CircleShape2D_lt8re")
+debug_color = Color(0.829251, 0.377818, 0.307328, 0.42)

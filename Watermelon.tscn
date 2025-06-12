@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://d3wb82kpgacr1"]
+
+[ext_resource type="Script" path="res://Watermelon.gd" id="1_0gqhd"]
+[ext_resource type="Texture2D" uid="uid://d1wxwa80hwdw6" path="res://watermelon.png" id="2_i7aai"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_673kg"]
+radius = 20.0
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Watermelon" type="RigidBody2D" parent="."]
+script = ExtResource("1_0gqhd")
+
+[node name="Sprite2D" type="Sprite2D" parent="Watermelon"]
+position = Vector2(-2.5, 4)
+scale = Vector2(0.53, 0.4)
+texture = ExtResource("2_i7aai")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Watermelon"]
+shape = SubResource("CircleShape2D_673kg")
+debug_color = Color(0.309614, 0.502096, 0.97529, 0.42)

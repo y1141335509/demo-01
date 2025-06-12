@@ -24,9 +24,13 @@ func _process(delta):
 
 func check_hit(pos):
 	var space_state = get_world_2d().direct_space_state
-	var result = space_state.intersect_point(pos, 32)
+	var query = PhysicsPointQueryParameters2D.new()
+	query.position = pos
+	query.collision_mask = 1
+	
+	var result = space_state.intersect_point(query)
 	for item in result:
-		if item.has("collider") and "cuttable" in item.collider:
+		if item.has("collider") and item.collider.has_method("slice"):
 			item.collider.slice()
 
 

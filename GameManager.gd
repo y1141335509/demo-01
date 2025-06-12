@@ -3,19 +3,15 @@ extends Node
 var hunger := 50
 var sugar := 50
 var time_left := 30.0
-var game_manager
-
-@export var timer: Timer
 
 # @onready表示 delay the initialization of a variable until the node containing it is added to the scene tree.
-@onready var hunger_bar : ProgressBar
-@onready var glucose_bar : ProgressBar
-@onready var timer_label := Label
-@onready var spawner := Timer
+@onready var hunger_bar: ProgressBar = $"../UI/HungerBar"
+@onready var glucose_bar: ProgressBar = $"../UI/GlucoseBar" 
+@onready var timer_label: Label = $"../UI/TimerLabel"
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	$Timer.start()
+	pass
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
