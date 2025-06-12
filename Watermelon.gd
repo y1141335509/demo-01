@@ -1,36 +1,58 @@
-extends RigidBody2D
+extends Node2D
 
-@export var hunger_value := 10		# make this varable configurable in Inspector
-@export var sugar_value := 15
+@export var watermelon_scene: PackedScene
+@onready var game_manager := $"../GameManager"
 
-# signal规定 节点之间的通信没有直接的依赖关系
-signal sliced(hunger: int, sugar: int)
-var cuttable := true
+var spawn_timer: Timer
+var is_spawning = false
 
 func _ready():
-	# 在游戏开始后，确保所有的西瓜都受到重力的影响
-	gravity_scale = 1.0
+	print("WatermelonSpawner ready")
 	
-	# 设置碰撞层，确保可以被检测到
-	collision_layer = 1
-	collision_mask = 1
+	# Create and setup timer
+	spawn_timer = Timer.new()
+	add_child(spawn_timer)
+	spawn_timer.wait_time = 2.0
+	spawn_timer.timeout.connect(_on_timer_timeout)
 
-func slice():
-	if not cuttable:
-		return 
-	cuttable = false
-	# emit_signal 是用来忽略之前定义的signal的，用来触发相关的方法
-	emit_signal("sliced", hunger_value, sugar_value)
-	
-	# 添加切开的视觉效果
-	modulate = Color.RED
-	
-	# 删除延迟，让玩家看到效果
-	var timer = Timer.new()
-	timer.wait_time = 0.2
-	timer.one_shot = true
-	timer.timeout.connect(queue_free)
-	queue_free()
-	timer.start()
-	
+func start_spawning():
+	print("Starting watermelon spawning")
+	is_spawning = true
+	if spawn_timer:
+		spawn_timer.start()
 
+func stop_spawning():
+	print("Stopping watermelon spawning")
+	is_spawning = false
+	if spawn_timer:
+		spawn_timer.stop()
+
+func _on_timer_timeout():
+	if not is_spawning:
+		return
+		
+	print("Spawning watermelon...")
+	spawn_watermelon()
+
+func spawn_watermelon():
+	if not watermelon_scene:
+		print("Error: No watermelon scene assigned")
+		return
+		
+	if not game_manager:
+		print("Error: GameManager not found")
+		return
+	
+	var watermelon = watermelon_scene.instantiate()
+	
+	# Set random position
+	watermelon.position = Vector2(randf_range(100, 700), 600)
+	watermelon.linear_velocity = Vector2(randf_range(-100, 100), randf_range(-600, -400))
+	
+	# Connect signal
+	watermelon.connect("sliced", Callable(game_manager, "update_stats"))
+	
+	# Add to main scene (parent of this spawner)
+	get_parent().add_child(watermelon)
+	
+	print("Watermelon spawned at: ", watermelon.position)
