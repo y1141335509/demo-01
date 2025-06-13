@@ -10,6 +10,7 @@ var max_lifetime := 15.0
 
 func _ready():
 	add_to_group("cuttable")
+	add_to_group("watermelons")  # 添加到西瓜组，用于暂停管理
 	print("预制西瓜就绪")
 
 func _process(delta):

@@ -71,6 +71,7 @@ func spawn_watermelon():
 	
 	# 直接设置必要的属性和信号
 	watermelon.add_to_group("cuttable")
+	watermelon.add_to_group("watermelons")  # 添加到西瓜组，用于暂停管理
 	print("动态西瓜已加入 cuttable 组")
 	
 	# 添加自定义信号
@@ -96,17 +97,19 @@ func spawn_watermelon():
 	lifetime_timer.one_shot = true
 	lifetime_timer.timeout.connect(watermelon.queue_free)
 	watermelon.add_child(lifetime_timer)
-	lifetime_timer.start()
 	
 	# 添加边界检查定时器
 	var boundary_timer = Timer.new()
 	boundary_timer.wait_time = 0.5  # 每0.5秒检查一次
 	boundary_timer.timeout.connect(_check_watermelon_boundary.bind(watermelon))
 	watermelon.add_child(boundary_timer)
-	boundary_timer.start()
 	
 	# 添加到场景
 	get_parent().add_child(watermelon)
+	
+	# 在添加到场景树后启动定时器
+	lifetime_timer.start()
+	boundary_timer.start()
 	
 	# 连接信号
 	var connection_result = watermelon.connect("sliced", Callable(game_manager, "on_watermelon_sliced"))
@@ -141,6 +144,11 @@ func _slice_dynamic_watermelon(watermelon: RigidBody2D):
 	var is_sliced = watermelon.get_meta("is_sliced", false)
 	
 	if not cuttable or is_sliced:
+		return
+	
+	# 检查游戏是否暂停
+	if game_manager and game_manager.is_paused:
+		print("游戏暂停中，无法切割动态西瓜")
 		return
 	
 	print("🍉 动态西瓜被切!")
