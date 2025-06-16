@@ -1,10 +1,10 @@
 [gd_scene load_steps=7 format=3 uid="uid://bja3k5auq7iyd"]
 
-[ext_resource type="Script" path="res://GameManager.gd" id="1_sxskj"]
-[ext_resource type="Script" path="res://PlayerSwipe.gd" id="2_fqaf4"]
-[ext_resource type="Script" path="res://WatermelonSpawner.gd" id="3_v5ovr"]
-[ext_resource type="Script" path="res://Watermelon.gd" id="5_kc52n"]
-[ext_resource type="Texture2D" uid="uid://d1wxwa80hwdw6" path="res://watermelon.png" id="6_27xh6"]
+[ext_resource type="Script" path="res://scripts/GameManager.gd" id="1_sxskj"]
+[ext_resource type="Script" path="res://scripts/PlayerSwipe.gd" id="2_fqaf4"]
+[ext_resource type="Script" path="res://scripts/WatermelonSpawner.gd" id="3_v5ovr"]
+[ext_resource type="FontFile" uid="uid://c4mi4ql5g8jyl" path="res://fonts/NotoSansSC-Regular.ttf" id="4_ht6og"]
+[ext_resource type="Script" path="res://scripts/Watermelon.gd" id="5_kc52n"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_lt8re"]
 radius = 15.7
@@ -25,7 +25,7 @@ script = ExtResource("3_v5ovr")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="HungerBar" type="ProgressBar" parent="UI"]
+[node name="GlucoseBar" type="ProgressBar" parent="UI"]
 custom_minimum_size = Vector2(300, 30)
 anchors_preset = 1
 anchor_left = 1.0
@@ -38,7 +38,7 @@ grow_horizontal = 0
 value = 50.0
 show_percentage = false
 
-[node name="HungerLabel" type="Label" parent="UI"]
+[node name="GlucoseLabel" type="Label" parent="UI"]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -47,10 +47,12 @@ offset_top = 35.0
 offset_right = -20.0
 offset_bottom = 58.0
 grow_horizontal = 0
-text = "饥饿度"
+theme_override_fonts/font = ExtResource("4_ht6og")
+text = "血糖"
 horizontal_alignment = 1
 
-[node name="GlucoseBar" type="ProgressBar" parent="UI"]
+[node name="HungerBar" type="ProgressBar" parent="UI"]
+visible = false
 custom_minimum_size = Vector2(300, 30)
 anchors_preset = 1
 anchor_left = 1.0
@@ -63,7 +65,8 @@ grow_horizontal = 0
 value = 50.0
 show_percentage = false
 
-[node name="GlucoseLabel" type="Label" parent="UI"]
+[node name="HungerLabel" type="Label" parent="UI"]
+visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -72,7 +75,8 @@ offset_top = 95.0
 offset_right = -20.0
 offset_bottom = 118.0
 grow_horizontal = 0
-text = "血糖"
+theme_override_fonts/font = ExtResource("4_ht6og")
+text = "饥饿度"
 horizontal_alignment = 1
 
 [node name="TimerLabel" type="Label" parent="UI"]
@@ -84,6 +88,7 @@ offset_top = 20.0
 offset_right = 50.0
 offset_bottom = 47.0
 grow_horizontal = 2
+theme_override_fonts/font = ExtResource("4_ht6og")
 text = "Time: 30.0"
 horizontal_alignment = 1
 
@@ -92,6 +97,7 @@ offset_left = 20.0
 offset_top = 20.0
 offset_right = 100.0
 offset_bottom = 55.0
+theme_override_fonts/font = ExtResource("4_ht6og")
 text = "暂停"
 
 [node name="Background" type="Sprite2D" parent="."]
@@ -101,7 +107,6 @@ position = Vector2(-96, 72)
 script = ExtResource("5_kc52n")
 
 [node name="Sprite2D" type="Sprite2D" parent="Watermelon"]
-texture = ExtResource("6_27xh6")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Watermelon"]
 shape = SubResource("CircleShape2D_lt8re")
